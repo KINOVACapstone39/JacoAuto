@@ -277,18 +277,30 @@ while True:
 
         depth_image = np.asanyarray(depth_frame.get_data())
         color_image = np.asanyarray(color_frame.get_data())
-
         depth_colormap = np.asanyarray(
             colorizer.colorize(depth_frame).get_data())
+
+        imageShape = color_image.shape
+
+        interest_points = []
+        for x in range(200, 300):
+            for y in range(100, 200):
+                interest_points.append([x, y])
+
+
+        for x in interest_points[:]:
+            print(x)
+            color_image[x[0]][x[1]] = [1.25, 1.25, 1.25]
+
 
         if state.color:
             mapped_frame, color_source = color_frame, color_image
         else:
             mapped_frame, color_source = depth_frame, depth_colormap
 
+        #cv2.imwrite('color_img.jpg', color_image)
         points = pc.calculate(depth_frame)
         pc.map_to(mapped_frame)
-
         # Pointcloud data to arrays
         v, t = points.get_vertices(), points.get_texture_coordinates()
         verts = np.asanyarray(v).view(np.float32).reshape(-1, 3)  # xyz
@@ -341,7 +353,7 @@ while True:
         state.color ^= True
 
     if key == ord("s"):
-        cv2.imwrite('./out.png', out)
+        cv2.imwrite('color_img.jpg', color_image)
 
     if key == ord("e"):
         points.export_to_ply('./1.ply', mapped_frame)
