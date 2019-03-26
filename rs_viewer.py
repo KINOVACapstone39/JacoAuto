@@ -81,6 +81,7 @@ decimate = rs.decimation_filter()
 decimate.set_option(rs.option.filter_magnitude, 2 ** state.decimate)
 colorizer = rs.colorizer()
 
+objectCoordinates = []
 
 def mouse_cb(event, x, y, flags, param):
 
@@ -258,8 +259,8 @@ def pointcloud(out, verts, texcoords, color, painter=True):
 
 
 out = np.empty((h, w, 3), dtype=np.uint8)
-
-while True:
+key = 0
+while key != 1:
     # Grab camera data
     if not state.paused:
         # Wait for a coherent pair of frames: depth and color
@@ -283,14 +284,14 @@ while True:
         imageShape = color_image.shape
 
         interest_points = []
-        for x in range(200, 300):
+        '''for x in range(200, 300):
             for y in range(100, 200):
                 interest_points.append([x, y])
 
 
         for x in interest_points[:]:
             print(x)
-            color_image[x[0]][x[1]] = [1.25, 1.25, 1.25]
+            color_image[x[0]][x[1]] = [1.25, 1.25, 1.25]'''
 
 
         if state.color:
@@ -336,24 +337,23 @@ while True:
     cv2.imshow(state.WIN_NAME, out)
     key = cv2.waitKey(1)
 
-    if key == ord("r"):
-        state.reset()
-
-    if key == ord("p"):
-        state.paused ^= True
-
-    if key == ord("d"):
-        state.decimate = (state.decimate + 1) % 3
-        decimate.set_option(rs.option.filter_magnitude, 2 ** state.decimate)
-
-    if key == ord("z"):
-        state.scale ^= True
-
-    if key == ord("c"):
-        state.color ^= True
-
     if key == ord("s"):
         cv2.imwrite('color_img.jpg', color_image)
+        globals = {}
+        execfile('OD.py', globals)
+        globalBoxes = globals["globalBoxes"]
+        labels = globals["labels"]
+        confs = globals["confs"]
+        print '[%s]' % ', '.join(map(str, globalBoxes))
+        print '[%s]' % ', '.join(map(str, labels))
+        print '[%s]' % ', '.join(map(str, confs))
+        count = 1
+        for i in labels:
+            print("Press " + str(count) + " for " + str(i))
+            count = count + 1
+        key = cv2.waitKey(1)
+        objectCoordinates = globalBoxes[key-1]
+        cv2.waitKey(1)
 
     if key == ord("e"):
         points.export_to_ply('./1.ply', mapped_frame)
