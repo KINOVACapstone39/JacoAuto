@@ -81,7 +81,8 @@ decimate = rs.decimation_filter()
 decimate.set_option(rs.option.filter_magnitude, 2 ** state.decimate)
 colorizer = rs.colorizer()
 
-objectCoordinates = []
+objectCoordinates = [0, 0, 0, 0]
+detectObject = 0;
 
 def mouse_cb(event, x, y, flags, param):
 
@@ -261,7 +262,7 @@ def pointcloud(out, verts, texcoords, color, painter=True):
 out = np.empty((h, w, 3), dtype=np.uint8)
 key = 0
 while key != 1:
-    # Grab camera data
+    # stream camera data
     if not state.paused:
         # Wait for a coherent pair of frames: depth and color
         frames = pipeline.wait_for_frames()
@@ -284,14 +285,15 @@ while key != 1:
         imageShape = color_image.shape
 
         interest_points = []
-        '''for x in range(200, 300):
-            for y in range(100, 200):
+        for x in range(objectCoordinates[1], objectCoordinates[1] + objectCoordinates[3]):
+            for y in range(objectCoordinates[0], objectCoordinates[0] + objectCoordinates[2]):
                 interest_points.append([x, y])
 
 
         for x in interest_points[:]:
-            print(x)
-            color_image[x[0]][x[1]] = [1.25, 1.25, 1.25]'''
+            #print(x)
+            color_image[x[0]][x[1]] = [255, 0, 255]
+
 
 
         if state.color:
@@ -337,7 +339,16 @@ while key != 1:
     cv2.imshow(state.WIN_NAME, out)
     key = cv2.waitKey(1)
 
-    if key == ord("s"):
+    if key == ord("e"):
+        points.export_to_ply('./1.ply', mapped_frame)
+        execfile('open_3d_ply_analyser.py')
+
+    if detectObject == 1:
+        points.export_to_ply('./1.ply', mapped_frame)
+        execfile('open_3d_ply_analyser.py')
+        detectObject = 0
+
+    if (key == ord("s")) and (detectObject == 0):
         cv2.imwrite('color_img.jpg', color_image)
         globals = {}
         execfile('OD.py', globals)
@@ -351,13 +362,18 @@ while key != 1:
         for i in labels:
             print("Press " + str(count) + " for " + str(i))
             count = count + 1
-        key = cv2.waitKey(1)
-        objectCoordinates = globalBoxes[key-1]
-        cv2.waitKey(1)
-
-    if key == ord("e"):
-        points.export_to_ply('./1.ply', mapped_frame)
-        execfile('open_3d_ply_analyser.py')
+        cont = input("Selection?")
+        if (len(globalBoxes) > 0) and (0 < cont <= len(globalBoxes)):
+            objectCoordinates = globalBoxes[cont-1]
+            detectObject = 1
+        else:
+            print("No object detected ... ")
+            print("Scanning ... ")
+            print("Press 's' key for selection mode ... ")
+    elif (detectObject == 1):
+        print("No object detected ... ")
+        print("Scanning ... ")
+        print("Press 's' key for selection mode ... ")
 
     if key in (27, ord("q")) or cv2.getWindowProperty(state.WIN_NAME, cv2.WND_PROP_AUTOSIZE) < 0:
         break

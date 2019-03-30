@@ -20,12 +20,11 @@ obj = 1
 # Object location
 b = 0.05
 h = 0.2
-xo = 0.2
-yo = -0.45
+xo = 0.13
+yo = -0.41
 zo = -0.02
-h = 0.2
 azx = 0.1
-azy = 0.1
+azy = 1.5
 azz = 0.1
 xs = np.sign(xo)
 ys = np.sign(yo)
@@ -34,9 +33,9 @@ zs = np.sign(zo)
 xh = 0.25
 yh = -0.30
 zh = 0.5
-azx = 0.1
-azy = 1.5
-azz = 0.1
+#azx = 0.1
+#azy = 1.5
+#azz = 0.1
 
 fls = ['comnd.txt', 'obj.txt', 'pos.txt']
 f = open("Wait.txt", "w")
@@ -70,8 +69,8 @@ while end_program == 1:
             f.close()
             f = open("pos.txt","w")
             if grasp == 1:
-                xp = xo - xs*0.02
-                yp = yo - ys*0.02
+                xp = xo - xs*0.015
+                yp = yo - ys*0.015
                 zp = zo
                 f.write("%f\t%f\t%f\t%f\t%f\t%f\n" % (xp, yp, zp, azx, azy, azz))
             elif grasp == 0:

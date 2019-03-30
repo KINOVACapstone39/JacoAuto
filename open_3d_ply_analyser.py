@@ -2,189 +2,195 @@
 
 import numpy as np
 import math
-import open3d
-from open3d import *
+import statistics as st
 import os
 import time
-fls = ['NumObj.txt', 'grasp.txt', 'rs_data.txt', 'grasp_obj.txt', 'pos_data.txt', 'Wait.txt']
+from open3d import *
 
+# Home Position
+xh = 0.25
+yh = -0.30
+zh = 0.5
+azx = 0.1
+azy = 1.5
+azz = 0.1
+Wait = 0
+grasp = 1
+end_program = 1
+obj = 1
+
+NumPose = 2
 pth1 = os.getcwd()
 print(pth1)
-pth2 = "/home"
+pth2 = "/home/acis"
 os.chdir(pth2)
 pth2 = os.getcwd()
+print(pth2)
+
+fls = ['comnd.txt', 'obj.txt', 'pos.txt']
+f = open("Wait.txt", "w")
+f.write("%d\t%d\t%d\n" % (Wait, end_program, grasp))
+f.close()
+
 os.chdir(pth1)
-key = 0
-m = 0
-NumPose = 2
-ang = [0.1, 1.5, 0.1]
-while key == 0:
-    m = m+1
 
-    if __name__ == "__main__":
+if __name__ == "__main__":
 
-        print("Load a ply point cloud, print it, and render it")
-        pcd = read_point_cloud("1.ply")
-        data = np.asarray(pcd.points)
-        size = data.shape[0]
-        thetaX = math.pi * 20 / 180
-        array1 = np.array([1.0, 0.0, 0.0])
-        array2 = np.array([0, math.cos(thetaX), -1 * math.sin(thetaX)])
-        array3 = np.array([0, math.sin(thetaX), math.cos(thetaX)])
+    print("Load a ply point cloud, print it, and render it")
+    pcd = read_point_cloud("1.ply")
+    data = np.asarray(pcd.points)
+    size = data.shape[0]
+    thetaX = math.pi * -1 / 180
+    array1 = np.array([1.0, 0.0, 0.0])
+    array2 = np.array([0, math.cos(thetaX), -1 * math.sin(thetaX)])
+    array3 = np.array([0, math.sin(thetaX), math.cos(thetaX)])
 
-        for x in range(size):
-            currentData = data[x]
-            currentData.transpose()
-            transformation = np.array([array1, array2, array3])
-            currentData = np.matmul(currentData, transformation)
-            currentData.transpose()
-            data[x] = currentData
-        colors = np.asarray(pcd.colors)
-        size = colors.shape[0]
-        count = 0
-        reducedData = []
-        color = np.array([0.00392156862745098, 0.00392156862745098, 0.00392156862745098])
-        for x in range(size):
-            if color in colors[x]:
-                reducedData.append(data[x])
-        newdata = np.asarray(reducedData)
+    for x in range(size):
+         currentData = data[x]
+         currentData.transpose()
+         transformation = np.array([array1, array2, array3])
+         currentData = np.matmul(currentData, transformation)
+         currentData.transpose()
+         data[x] = currentData
+    colors = np.asarray(pcd.colors)
+    size = colors.shape[0]
+    count = 0
+    reducedData = []
+    color = np.array([255, 0, 255])
+    for x in range(size):
+        if color in colors[x]:
+            reducedData.append(data[x])
+    newdata = np.asarray(reducedData)
 
-        planes = 5
+    graspData = []
 
-        ZLimits = np.array((np.amin(newdata[:, 2]), np.amax(newdata[:, 2])))
-        planeResolution = abs(ZLimits[0] - ZLimits[1]) / (planes - 1)
-        z = np.linspace(ZLimits[0], ZLimits[1], planes)
+    planes = int(round((np.amax(newdata[:, 2]) - np.amin(newdata[:, 2])) / 0.2))
 
-        for i in range(len(newdata[:, 0])):
-            currentPtz = newdata[i, 2]
-            d = np.zeros(planes)
-            for j in range(planes):
-                d[j] = abs(currentPtz - z[j])
-            dmin = min(d)
-            I = d.argmin()
-            newdata[i, 2] = z[I]
+    ZLimits = np.array((np.amin(newdata[:, 2]), np.amax(newdata[:, 2])))
+    planeResolution = abs(ZLimits[0] - ZLimits[1]) / (planes - 1)
+    z = np.linspace(ZLimits[0], ZLimits[1], planes)
 
-    #point_cloud = open3d.PointCloud()
-    #point_cloud.points = open3d.Vector3dVector(newdata)
+    for i in range(len(newdata[:, 2])):
+        currentPtz = newdata[i, 2]
+        d = np.zeros(planes)
+        for j in range(planes):
+            d[j] = abs(currentPtz - z[j])
+        dmin = min(d)
+        tests = d.argmin()
+        if d.argmin() == planes - 1:
+            graspData.append(newdata[i])
+        I = d.argmin()
+    '''newdata[i, 2] = z[I]'''
 
-    #draw_geometries([pcd])
-    #draw_geometries([point_cloud])
+    planes = 5
+    convertedGraspData = np.asarray(graspData)
+    newdata2 = convertedGraspData
+    ZLimits = np.array((np.amin(newdata2[:, 1]), np.amax(newdata2[:, 1])))
+    planeResolution = abs(ZLimits[0] - ZLimits[1]) / (planes - 1)
+    z = np.linspace(ZLimits[0], ZLimits[1], planes)
 
-    Wait = 0
-    end_program = 1
-    # POSITION OF OBJECTS, MAY CHOOSE TO DO ELSEWHERE
-    xo = [0.25, 0.5, -0.3]  # defined from point cloud
-    yo = [0.25, -0.5, 0.3]  # defined from point cloud
-    zo = [0, -0.10, -0.10]  # defined from point cloud
-    xo_sign = np.sign(xo)
-    yo_sign = np.sign(yo)
-    zo_sign = np.sign(zo)
+    for i in range(len(newdata2[:, 1])):
+        currentPtz = newdata2[i, 1]
+        d = np.zeros(planes)
+        for j in range(planes):
+            d[j] = abs(currentPtz - z[j])
+        dmin = min(d)
+        tests = d.argmin()
+        if d.argmin() == planes - 1:
+            graspData.append(newdata[i])
+        I = d.argmin()
+        newdata2[i, 1] = z[I]
 
-    # THE FOLLOWING IS PSUEDO-CODE, NEEDS YOLO
-    nms = input("Number of Objects?")  # NUMBER OF OBJECTS FROM YOLO DETECTION
-    nms = nms-1
-    choice = input("Which Object?")         # BOUNDING BOX # FROM USER INPUT
-    choice = choice - 1
-    print("Define cartesian positions of the objects ... ")
-    NumObj = nms  # Number of objects (identified in Yolo)
-    Obj = choice   # object wanting to grasp
+    points = [[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0],
+             [0, 0, 1], [1, 0, 1], [0, 1, 1], [1, 1, 1]]
+    lines = [[0, 1], [0, 2], [1, 3], [2, 3],
+            [4, 5], [4, 6], [5, 7], [6, 7],
+            [0, 4], [1, 5], [2, 6], [3, 7]]
+    colors = [[1, 0, 0] for i in range(len(lines))]
+    line_set = LineSet()
+    line_set.points = Vector3dVector(points)
+    line_set.lines = Vector2iVector(lines)
+    line_set.colors = Vector3dVector(colors)
 
+    point_cloud = open3d.PointCloud()
+    point_cloud.points = open3d.Vector3dVector(newdata)
 
-    # detect the current working directory and print it
+    grasp_cloud = open3d.PointCloud()
+    grasp_cloud.points = open3d.Vector3dVector(convertedGraspData)
+    np.savetxt("foo2.csv", convertedGraspData, delimiter=",")
 
-    flag = [0, 0, 1]  # 0 = cylinder, 1=rectangular prism
-    dim = [[0.02, 0.4], [0.02, 0.4], [0.02, 0.4]] # dimensions of the objects (defined from yolo)
-    if NumPose == 1:
-        xp = xo
-        yp = yo
-        zp = zo
-    elif NumPose > 1:
-        xp = np.zeros((NumPose, NumObj))
-        yp = xp
-        zp = xp
-    else:
-        print("Number of poses must be defined greater than zero!")
-        break
+    slice_cloud = open3d.PointCloud()
+    slice_cloud.points = open3d.Vector3dVector(newdata2)
 
+    draw_geometries([line_set, grasp_cloud])
+    '''draw_geometries([line_set, point_cloud])
+    draw_geometries([pcd])
+    draw_geometries([line_set, slice_cloud])'''
 
+    # coordinate transforms
+    xTrans = -0.67
+    yTrans = -0.44
+    zTrans = -0.13
+    size = convertedGraspData.shape[0]
 
+    for x in range(size):
+        tempY = convertedGraspData[x][0] - yTrans
+        tempZ = convertedGraspData[x][1] - zTrans
+        tempX = convertedGraspData[x][2] - xTrans
+        convertedGraspData[x] = [-tempX, -tempY, -tempZ]
+
+    # Object dimensions
+    b = np.amax(convertedGraspData[:, 1]) - np.amin(convertedGraspData[:, 1])
+    h = np.amax(convertedGraspData[:, 2]) - np.amin(convertedGraspData[:, 2])
+
+    # Object locations
+    xo = np.around(np.amin(convertedGraspData[:, 0]) + b / 2, decimals=3)
+    print(xo)
+    yo = np.around(st.mean(convertedGraspData[:, 1]), decimals=3)
+    print(yo)
+    zo = np.around(h-h/2+zTrans, decimals=2)
+    print(zo)
+    xs = np.sign(xo)
+    ys = np.sign(yo)
+    zs = np.sign(zo)
     os.chdir(pth2)
+   # b = 0.05
+   # h = 0.1
+   # xo = 0.13
+   # yo = -0.41
+   # zo = -0.05
+    print(pth2)
+    for i in range(NumPose):
+        # RUN PROGRAM TO SELECT OBJECT HERE
+        grasp = input("grasp?")
+        f = open("obj.txt", "w")
+        f.write("%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n" % (b, h, float(xo), float(yo), float(zo), azx, azy, azz))
+        f.close()
+        f = open("pos.txt", "w")
+        if grasp == 1:
+            xp = xo - xs * 0.025
+            yp = yo - ys * 0.025
+            zp = zo
+            f.write("%f\t%f\t%f\t%f\t%f\t%f\n" % (float(xp), float(yp), float(zp), azx, azy, azz))
+        elif grasp == 0:
+            f.write("%f\t%f\t%f\t%f\t%f\t%f\n" % (xh, yh, zh, azx, azy, azz))
+        f.close()
+        # THE FOLLOWING IS PSUEDO-CODE, NEEDS YOLO
+        Wait = 1
+        f = open("comnd.txt", "w")  # open file for overwrite
+        f.write("%d\t%d\t%d\n" % (Wait, end_program, grasp))
+        f.close()
+        time.sleep(2.5)
+        Wait = 0
+        f = open("comnd.txt", "w")  # open file for overwrite
+        f.write("%d\t%d\t%d\n" % (Wait, end_program, grasp))
+        f.close()
+        time.sleep(2)
 
+       # f = open("comnd.txt", "w")  # open file for overwrite
+       #    f.write("%d\t%d\t%d\n" % (Wait, end_program, grasp))
+       #    f.close()
 
-    # overwrite each file and add delay in time for program to respond
-    for i in range(len(fls)):
-        f = open(fls[i], "w")       # open file for overwrite
-        if i == 0:
-            f.write("%d" % NumObj)  # NumObj is an integer
-            f.close()
-        elif i == 1:
-            f.write("%d\t%d" % (grasp, Obj))  # grasp is an integer
-            f.close()
-        elif i == 2:
-            for j in range(NumObj):
-                    f.write("%d\t%f\t%f\t%f\t%f\t%f\n" % (flag[j], dim[j][0], dim[j][1], xo[j], yo[j], zo[j]))
-                    if j == Obj:
-                        f1 = open(fls[i+1], "w")  # no appending
-                        f1.write("%f\t%f\t%f\t%f\t%f\n" % (dim[j][0], dim[j][1], xo[j], yo[j], zo[j]))
-                        f1.close()
-                    f.close()
-        elif i == 4:
-            if dim[Obj][0] < 0.05:
-                if dim[Obj][0] > dim[Obj][1]:
-                    ang = [0.3, 0.3, 1.5]
-                elif dim[Obj][0] < dim[Obj][1]:
-                    ang = [0.1, 1.5, 0.1]
-                else:
-                    ang = [0.0, 0.0, 1.5]
-            else:
-                print("Object is too big to grasp!")
-
-            for j in range(NumPose):
-                f = open(fls[i], "w")
-                if j == 0:
-                    xp[j] = 0.5
-                    xp[j] = 0.5
-                    yp[j] = 0.5
-                if (j > 0) and (j < NumPose):
-                    xp[j] = (xo[Obj] - xp[0])*j / NumPose  # x pose, up to three poses defined for 1 grasp
-                    yp[j] = (yo[Obj] - yo[0])*j / NumPose  # y pose
-                    zp[j] = (zo[Obj] - zo[0])*j / NumPose  # z pose
-                    f.write("%f\t%f\t%f\t%f\t%f\t%f\n" % (xp[j], yp[j], zp[j], ang[0], ang[1], ang[2]))
-                elif j == NumPose:
-                    grasp = int(1)  # 0 = close, 1 = open
-                    xp[j] = (xo[Obj] - xp[0]) * j / NumPose  # x pose, up to three poses defined for 1 grasp
-                    yp[j] = (yo[Obj] - yo[0]) * j / NumPose  # y pose
-                    zp[j] = (zo[Obj] - zo[0]) * j / NumPose  # z pose
-                    xp[j] = xp[j] - xo_sign[Obj]*0.02
-                    yp[j] = yp[j] - yo_sign[Obj]*0.02
-                    zp[j] = zp[j] - zo_sign[Obj]*0.02
-                    f.write("%f\t%f\t%f\t%f\t%f\t%f\n" % (xp[j], yp[j], zp[j], ang[0], ang[1], ang[2]))
-                    f.close()
-                    grasp = int(0)          # will perform the grasp operation next loop
-                    xo[Obj] = xp[j]         # updates the location of the object to the location of the gripper
-                    yo[Obj] = yp[j]
-                    zo[Obj] = zp[j]
-                f.close()
-                sleep_time = 10 / NumPose
-                time.sleep(sleep_time)
-        elif i == 5:
-            f.write("%d\t%d\n" % (Wait, end_program))
-            f.close()
-            Wait = input("Continue?")
-            end_program = input("End Program?")
-            f = open(fls[i], "w")
-            f.write("%d\t%d\n" % (Wait, end_program))
-            f.close()
     os.chdir(pth1)
-
-
-
-
-
-
-
-
-
-
-
-
+    print("Press the 's' key for selection mode ...")
+    '''draw_geometries([point_cloud])'''
