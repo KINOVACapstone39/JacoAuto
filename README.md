@@ -35,7 +35,7 @@ Prerequisite actions:
 Path directories for files:
 1. catkin_ws must fall under the home directory.
 2. All python files must be accessible to a python project in PyCharm or your preferred python IDE.
-3. Read-Write TXT files and c.sh must fall under the home directory, otherwise their directory must be changed in object_ply_analyser.py. 
+3. Read-Write TXT files and c.sh must fall under the home directory, otherwise their directory must be changed in open_3D_ply_analyser.py. 
 
 Executing the program:
 1. Open the Python project. With correctly calibrated position of robot and camera, run rs_viewer.py.
