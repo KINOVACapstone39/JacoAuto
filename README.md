@@ -1,12 +1,11 @@
 # JacoAuto for OS Ubuntu 16.04
+WARNING: THIS SOFTWARE IS NOT TESTED, UNEXPECTED MOTION OF THE ARM MAY RESULT. 
+FOR RESEARCH PURPOSES ONLY. KEEP ALL LARGE OR DISRUPTIVE OBJECTS CLEAR BY 1 metre.
+
 Python code for implementing autonomous control of the Jaco Assistive Robot for grasping and returning an object from a
 specific location, and returning it to the home position. All commits made frequently prior  to April 6th.
 JacoAuto is a dependent source code repository that allows grasping of objects from a select location for
-the purspose of fullfilling the requirements of an undergraduate CAPSTONE design project. We disclaim all liability for
-any software errors or bugs that occur and result.  WARNING: THIS SOFTWARE IS NOT TESTED, UNEXPECTED MOTION OF THE ARM MAY RESULT. 
-FOR RESEARCH PURPOSES ONLY. KEEP ALL LARGE OR DISRUPTIVE OBJECTS CLEAR BY 1 metre. This method is property of KINOVA Robotics, used by the 
-University of British Columbia (UBC) Okanagan Advanced Control and Intelligent Systems (ACIS) laboratory for research purposes.
-It not designated as a product of sale or a final distributable software. It relies on third party dependencies, namely the following:
+the purspose of fullfilling the requirements of an undergraduate CAPSTONE design project. This method is used by the University of British Columbia (UBC) Okanagan Advanced Control and Intelligent Systems (ACIS) laboratory for research purposes. It not designated as a product of sale or a final distributable software. Elements of it are intellectual property of KINOVA Robotics, and other source distributors. We disclaim all liability for any software errors that occur and result in damages to property or the health and well-being of the user. USE AT YOUR OWN RISK. The implementation relies on third party dependencies, namely the following:
 
 Prerequisite software package installation:
 
@@ -36,7 +35,7 @@ Prerequisite actions:
 Path directories for files:
 1. catkin_ws must fall under the home directory.
 2. All python files must be accessible to a python project in PyCharm or your preferred python IDE.
-3. Read-Write TXT files and c.sh must fall under the home directory, otherwise their directory must be changed in XXXXX.py. 
+3. Read-Write TXT files and c.sh must fall under the home directory, otherwise their directory must be changed in object_ply_analyser.py. 
 
 Executing the program:
 1. Open the Python project. With correctly calibrated position of robot and camera, run rs_viewer.py.
@@ -52,4 +51,4 @@ Using the program:
 6. Press "1" in a point cloud window to stop execution, otherwise press "s" to select a new object.
 
 These programs are for demonstration purposes only. They do not allow the manipulation of objects, and do not provide an intuitive user interface.
-These may be developed hopefully with the method's growth by the ACIS laboratory, third party users, or Kinova.
+These may be developed hopefully with the method's growth by the ACIS laboratory, third party users, or Kinova Robotics.
