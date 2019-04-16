@@ -24,9 +24,11 @@ Keyboard:
 
 import math
 import time
-import cv2
+import cv2 as cv2
 import numpy as np
 import pyrealsense2 as rs
+import matplotlib.pyplot as plt
+from multiprocessing import Process
 
 
 class AppState:
@@ -82,7 +84,10 @@ decimate.set_option(rs.option.filter_magnitude, 2 ** state.decimate)
 colorizer = rs.colorizer()
 
 objectCoordinates = [0, 0, 0, 0]
-detectObject = 0;
+detectObject = 0
+globalBoxes = None
+selection = 0
+fig, ax = plt.subplots()
 
 def mouse_cb(event, x, y, flags, param):
 
@@ -129,7 +134,7 @@ def mouse_cb(event, x, y, flags, param):
 
     state.prev_mouse = (x, y)
 
-
+winName = 'Object  Detection with OpenCV'
 cv2.namedWindow(state.WIN_NAME, cv2.WINDOW_AUTOSIZE)
 cv2.resizeWindow(state.WIN_NAME, w, h)
 cv2.setMouseCallback(state.WIN_NAME, mouse_cb)
@@ -258,6 +263,19 @@ def pointcloud(out, verts, texcoords, color, painter=True):
     # perform uv-mapping
     out[i[m], j[m]] = color[u[m], v[m]]
 
+def plotgraph(labels):
+    plt.rcParams['toolbar'] = 'None'
+    fig, ax = plt.subplots()
+    textstr = ""
+    count = 0
+    for i in labels:
+        count = count + 1
+        textstr = textstr + "Press " + str(count) + " to grab " + str(i) + "\n"
+
+    props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+    ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=props)
+    plt.axis('off')
+    plt.show()
 
 out = np.empty((h, w, 3), dtype=np.uint8)
 key = 0
@@ -285,14 +303,15 @@ while key != 1:
         imageShape = color_image.shape
 
         interest_points = []
-        for x in range(objectCoordinates[1], objectCoordinates[1] + objectCoordinates[3]):
-            for y in range(objectCoordinates[0], objectCoordinates[0] + objectCoordinates[2]):
-                interest_points.append([x, y])
+        if detectObject == 1:
+            for x in range(objectCoordinates[1], objectCoordinates[1] + objectCoordinates[3]):
+                for y in range(objectCoordinates[0], objectCoordinates[0] + objectCoordinates[2]):
+                    interest_points.append([x, y])
 
 
-        for x in interest_points[:]:
-            #print(x)
-            color_image[x[0]][x[1]] = [255, 0, 255]
+            for x in interest_points[:]:
+                #print(x)
+                color_image[x[0]][x[1]] = [255, 0, 255]
 
 
 
@@ -335,7 +354,7 @@ while key != 1:
     cv2.setWindowTitle(
         state.WIN_NAME, "RealSense (%dx%d) %dFPS (%.2fms) %s" %
         (w, h, 1.0/dt, dt*1000, "PAUSED" if state.paused else ""))
-
+    cv2.moveWindow(state.WIN_NAME, 0, 540)
     cv2.imshow(state.WIN_NAME, out)
     key = cv2.waitKey(1)
 
@@ -343,40 +362,79 @@ while key != 1:
         points.export_to_ply('./1.ply', mapped_frame)
         execfile('open_3d_ply_analyser.py')
 
-    if detectObject == 1:
+    if detectObject == 1 and selection == 0:
         points.export_to_ply('./1.ply', mapped_frame)
         execfile('open_3d_ply_analyser.py')
         detectObject = 0
 
     if (key == ord("s")) and (detectObject == 0):
-        cv2.imwrite('color_img.jpg', color_image)
+
+        # execute OD and return globals
+        cv2.imwrite('color_img.jpg', color_image) # create img for OD
         globals = {}
         execfile('OD.py', globals)
         globalBoxes = globals["globalBoxes"]
         labels = globals["labels"]
         confs = globals["confs"]
-        print '[%s]' % ', '.join(map(str, globalBoxes))
-        print '[%s]' % ', '.join(map(str, labels))
-        print '[%s]' % ', '.join(map(str, confs))
-        count = 1
+        frame = globals["frame"]
+
+        # create window that displays yolo
+        winName = "Object Detection with YOLO"
+        cv2.namedWindow(winName, cv2.WINDOW_NORMAL)
+        cv2.imshow(winName, frame)
+        cv2.resizeWindow(winName, 640, 540)
+        cv2.moveWindow(winName, 0, 0)
+
+        selbox = cv2.imread('black.png')
+        count = 0
         for i in labels:
-            print("Press " + str(count) + " for " + str(i))
             count = count + 1
-        cont = input("Selection?")
-        if (len(globalBoxes) > 0) and (0 < cont <= len(globalBoxes)):
-            objectCoordinates = globalBoxes[cont-1]
-            detectObject = 1
-        else:
-            print("No object detected ... ")
-            print("Scanning ... ")
-            print("Press 's' key for selection mode ... ")
-    elif (detectObject == 1):
+            line = 75 * count
+            textstr = "Press " + str(count) + " to grab " + str(i) + "\n"
+            cv2.putText(selbox, textstr, (0, line), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 3)
+        cv2.putText(selbox, "Press c then s to reset", (0, 75 * (count+1)), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 3)
+        # create selection window
+        winName = "Object Selection Panel"
+        cv2.namedWindow(winName, cv2.WINDOW_NORMAL)
+        cv2.imshow(winName, selbox)
+        cv2.resizeWindow(winName, 300, 540)
+        cv2.moveWindow(winName, 700, 0)
+
+
+
+        selection = 1
+        detectObject = 1
+    elif key == ord("s") and detectObject == 1:
         print("No object detected ... ")
         print("Scanning ... ")
         print("Press 's' key for selection mode ... ")
+
+    if selection == 1 and (key == ord("c") or key == ord("1") or key == ord("2") or key == ord("3") or key == ord("4") or key == ord("5")):
+        cont = 0
+        if key == ord("1"):
+            cont = 1
+        elif key == ord("2"):
+            cont = 2
+        elif key == ord("3"):
+            cont = 3
+        elif key == ord("4"):
+            cont = 4
+        elif key == ord("5"):
+            cont = 5
+        elif key == ord("c"):
+            selection = 0
+            detectObject = 0
+        if (len(globalBoxes) > 0) and (0 < cont <= len(globalBoxes)):
+            objectCoordinates = globalBoxes[cont - 1]
+            selection = 0
+        else:
+            print("Object does not comply with grasp rules... ")
+            print("Scanning ... ")
+            print("Press 's' key for selection mode ... ")
 
     if key in (27, ord("q")) or cv2.getWindowProperty(state.WIN_NAME, cv2.WND_PROP_AUTOSIZE) < 0:
         break
 
 # Stop streaming
+plt.show()
 pipeline.stop()

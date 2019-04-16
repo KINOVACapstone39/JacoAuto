@@ -5,37 +5,49 @@ import math
 import statistics as st
 import os
 import time
-from open3d import *
+import cv2 as cv2
 
 # Home Position
-xh = 0.25
-yh = -0.30
+
+# Camera calibration
+xh = 0.00
+yh = -0.40
 zh = 0.5
-azx = 0.1
-azy = 1.5
-azz = 0.1
+azx = 0.001
+azy = 1.501
+azz = 0.001
+azxh = -1.501
+azzh = azz
+
+# Global variables
 Wait = 0
 grasp = 1
 end_program = 1
 obj = 1
-
+grasp = 1
 NumPose = 2
+
+# home path
 pth1 = os.getcwd()
 print(pth1)
 pth2 = "/home/acis"
+
 os.chdir(pth2)
 pth2 = os.getcwd()
 print(pth2)
 
+# Robot communication files
 fls = ['comnd.txt', 'obj.txt', 'pos.txt']
 f = open("Wait.txt", "w")
+
+# Write to files
 f.write("%d\t%d\t%d\n" % (Wait, end_program, grasp))
 f.close()
 
 os.chdir(pth1)
 
 if __name__ == "__main__":
-
+    # Point angles transformation to robot coordinates
     print("Load a ply point cloud, print it, and render it")
     pcd = read_point_cloud("1.ply")
     data = np.asarray(pcd.points)
@@ -64,6 +76,7 @@ if __name__ == "__main__":
 
     graspData = []
 
+    # Slicing and filtering points
     planes = int(round((np.amax(newdata[:, 2]) - np.amin(newdata[:, 2])) / 0.2))
 
     ZLimits = np.array((np.amin(newdata[:, 2]), np.amax(newdata[:, 2])))
@@ -80,8 +93,8 @@ if __name__ == "__main__":
         if d.argmin() == planes - 1:
             graspData.append(newdata[i])
         I = d.argmin()
-    '''newdata[i, 2] = z[I]'''
 
+    # Slicing object vertically
     planes = 5
     convertedGraspData = np.asarray(graspData)
     newdata2 = convertedGraspData
@@ -122,15 +135,44 @@ if __name__ == "__main__":
     slice_cloud = open3d.PointCloud()
     slice_cloud.points = open3d.Vector3dVector(newdata2)
 
-    draw_geometries([line_set, grasp_cloud])
-    '''draw_geometries([line_set, point_cloud])
+    ''' draw_geometries([line_set, grasp_cloud])
+    draw_geometries([line_set, point_cloud])
     draw_geometries([pcd])
     draw_geometries([line_set, slice_cloud])'''
 
+    #vis = Visualizer()
+    #vis.destroy_window()
+    #vis.create_window(window_name='Post YOLO Point Cloud', width=400, height=400, left=1000, right=30)
+    #vis.add_geometry(point_cloud)
+
+    #vis.update_geometry()
+    #vis.poll_events()
+    #vis.update_renderer()
+
+    vis2 = Visualizer()
+    vis2.destroy_window()
+    vis2.create_window(window_name='SliceNet Point Cloud', width=540, height=540, left=1000, right=0)
+    vis2.add_geometry(slice_cloud)
+
+    vis2.update_geometry()
+    vis2.poll_events()
+    vis2.update_renderer()
+
+
+    # vis3 = Visualizer()
+    # vis3.create_window(width=400, height=400, left=1000, right=800)
+    # vis3.add_geometry(grasp_cloud)
+    #
+    # vis3.update_geometry()
+    # vis3.poll_events()
+    # vis3.update_renderer()
+
+
+
     # coordinate transforms
-    xTrans = -0.67
-    yTrans = -0.44
-    zTrans = -0.13
+    xTrans = -0.615
+    yTrans = -0.47
+    zTrans = -0.04
     size = convertedGraspData.shape[0]
 
     for x in range(size):
@@ -148,32 +190,43 @@ if __name__ == "__main__":
     print(xo)
     yo = np.around(st.mean(convertedGraspData[:, 1]), decimals=3)
     print(yo)
-    zo = np.around(h-h/2+zTrans, decimals=2)
+    zo = np.around(h/2.0+zTrans, decimals=3)
     print(zo)
     xs = np.sign(xo)
     ys = np.sign(yo)
     zs = np.sign(zo)
     os.chdir(pth2)
-   # b = 0.05
-   # h = 0.1
-   # xo = 0.13
-   # yo = -0.41
-   # zo = -0.05
+    b = 0.05
+    h = 0.35
+    # xo = 0.13
+    # yo = -0.43
+    zo = h/2.0-0.102
     print(pth2)
     for i in range(NumPose):
         # RUN PROGRAM TO SELECT OBJECT HERE
-        grasp = input("grasp?")
+        # grasp = input("grasp?")
+        key = 3
+        while key != 1:
+            key = cv2.waitKey(1)
+            if key == ord("o"):
+                grasp = 1
+                break
+            elif key == ord("g"):
+                grasp = 0
+                break
+
+        # Open txt file of object
         f = open("obj.txt", "w")
         f.write("%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n" % (b, h, float(xo), float(yo), float(zo), azx, azy, azz))
         f.close()
         f = open("pos.txt", "w")
         if grasp == 1:
-            xp = xo - xs * 0.025
-            yp = yo - ys * 0.025
-            zp = zo
-            f.write("%f\t%f\t%f\t%f\t%f\t%f\n" % (float(xp), float(yp), float(zp), azx, azy, azz))
+            xp = float(xo) - float(xs * 0.02)
+            yp = float(yo) - float(ys * 0.02)
+            zp = -0.05
+            f.write("%f\t%f\t%f\t%f\t%f\t%f\n" % (xp, yp, zp, azx, azy, azz))
         elif grasp == 0:
-            f.write("%f\t%f\t%f\t%f\t%f\t%f\n" % (xh, yh, zh, azx, azy, azz))
+            f.write("%f\t%f\t%f\t%f\t%f\t%f\n" % (xh, yh, zh, azxh, azy, azzh))
         f.close()
         # THE FOLLOWING IS PSUEDO-CODE, NEEDS YOLO
         Wait = 1
@@ -185,9 +238,10 @@ if __name__ == "__main__":
         f = open("comnd.txt", "w")  # open file for overwrite
         f.write("%d\t%d\t%d\n" % (Wait, end_program, grasp))
         f.close()
-        time.sleep(2)
+        time.sleep(2.5)
 
-       # f = open("comnd.txt", "w")  # open file for overwrite
+
+       #f = open("comnd.txt", "w")  # open file for overwrite
        #    f.write("%d\t%d\t%d\n" % (Wait, end_program, grasp))
        #    f.close()
 

@@ -5,7 +5,7 @@ import numpy as np
 
 #Write down conf, nms thresholds,inp width/height
 confThreshold = 0.5
-nmsThreshold = 0.1
+nmsThreshold = 0.3
 inpWidth = 608 #320,426,608
 inpHeight = 608 #320,426,608
 globalBoxes = []
@@ -109,10 +109,10 @@ net.setPreferableTarget(cv.dnn.DNN_TARGET_CPU)
 
 
 #Process inputs
-winName = 'DL OD with OpenCV'
-cv.namedWindow(winName, cv.WINDOW_NORMAL)
-cv.resizeWindow(winName, 1000, 1000)
-
+# winName = 'Object  Detection with OpenCV'
+# cv.namedWindow(winName, cv.WINDOW_NORMAL)
+# cv.resizeWindow(winName, 0, 0)
+# cv.moveWindow("win1", 0, 0);
 
 
 image = 'color_img.jpg'
@@ -135,7 +135,7 @@ while cv.waitKey(1) < 0:
     postprocess(frame, outs)
 
     #show the image
-    cv.imshow(winName, frame)
+    # cv.imshow(winName, frame)
     cv.imwrite("yolo_output.jpg", frame)
     break
     cv.waitKey(1)
