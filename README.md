@@ -46,9 +46,10 @@ Using the program:
 1. Clicking on a window outside the execution terminal, type "s"
 2. Clicking in the terminal, select the object to grasp as a number (e.g. 1,2,3). Hit "Enter".
 3. Delete any windows that open with filtered point clouds in them.
-4. Press "1" and "Enter" for JACO to move towards the object with an open gripper.
-5. Press "0" and "Enter" for the gripper to close and return to a psuedo-home position.
+4. Press "o" and "Enter" for JACO to move towards the object with an open gripper.
+5. Press "g" and "Enter" for the gripper to close and return to a psuedo-home position.
 6. Press "1" in a point cloud window to stop execution, otherwise press "s" to select a new object.
+7. Press "c" then press "s" to view a new selection scene.
 
 These programs are for demonstration purposes only. They do not allow the manipulation of objects, and do not provide an intuitive user interface.
 These may be developed hopefully with the method's growth by the ACIS laboratory, third party users, or Kinova Robotics.
